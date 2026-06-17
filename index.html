@@ -1,0 +1,915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Qualesce Poster Agent</title>
+<style>
+/* ── Reset & Base ──────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+:root {
+  --navy:    #0d2a3d;
+  --blue:    #005a8c;
+  --teal:    #0096b4;
+  --lteal:   #20b2aa;
+  --accent:  #7fdfda;
+  --orange:  #e8900a;
+  --bg:      #07111d;
+  --card:    #0d1e2e;
+  --border:  rgba(255,255,255,0.08);
+  --text:    #e8f0f8;
+  --muted:   rgba(255,255,255,0.4);
+  --radius:  14px;
+}
+html, body { height:100%; }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'Segoe UI', Arial, sans-serif;
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* ── Top nav ───────────────────────────────────────────────── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 32px;
+  height: 60px;
+  background: rgba(13,26,45,0.85);
+  backdrop-filter: blur(10px);
+  border-bottom: 1px solid var(--border);
+  position: sticky;
+  top: 0;
+  z-index: 50;
+  flex-shrink: 0;
+}
+.topbar-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.topbar-brand span {
+  font-size: 15px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.2px;
+}
+.topbar-badge {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(0,150,180,0.12);
+  border: 1px solid rgba(0,150,180,0.3);
+  padding: 3px 10px;
+  border-radius: 20px;
+}
+.topbar-right {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.style-counter {
+  font-size: 12px;
+  color: var(--muted);
+}
+.style-counter strong { color: var(--accent); }
+
+/* ── Main two-column layout ────────────────────────────────── */
+.workspace {
+  display: flex;
+  flex: 1;
+  overflow: hidden;
+  height: calc(100vh - 60px);
+}
+
+/* ── LEFT PANEL ────────────────────────────────────────────── */
+.left-panel {
+  width: 420px;
+  min-width: 420px;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--border);
+  overflow-y: auto;
+  padding: 28px 24px;
+  gap: 22px;
+}
+.left-panel::-webkit-scrollbar { width: 4px; }
+.left-panel::-webkit-scrollbar-track { background: transparent; }
+.left-panel::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.1); border-radius: 2px; }
+
+.section-title {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 2px;
+  text-transform: uppercase;
+  color: var(--accent);
+  margin-bottom: 12px;
+}
+
+/* ── Source MCQ ────────────────────────────────────────────── */
+.mcq-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+.mcq-btn {
+  background: rgba(255,255,255,0.03);
+  border: 1.5px solid var(--border);
+  border-radius: var(--radius);
+  padding: 14px 14px 12px;
+  cursor: pointer;
+  color: rgba(255,255,255,0.65);
+  text-align: left;
+  transition: all 0.18s ease;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  user-select: none;
+  position: relative;
+  overflow: hidden;
+}
+.mcq-btn::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(135deg, rgba(0,150,180,0.08), transparent);
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.mcq-btn:hover { border-color: rgba(0,150,180,0.4); color: #fff; }
+.mcq-btn:hover::before { opacity: 1; }
+.mcq-btn.active {
+  border-color: var(--teal);
+  background: rgba(0,150,180,0.12);
+  color: #fff;
+}
+.mcq-btn.active::before { opacity: 1; }
+.mcq-icon { font-size: 22px; line-height: 1; }
+.mcq-label { font-size: 13px; font-weight: 700; }
+.mcq-desc  { font-size: 11px; color: rgba(255,255,255,0.35); }
+.mcq-btn.active .mcq-desc { color: var(--accent); opacity: 0.8; }
+
+/* ── Inputs ────────────────────────────────────────────────── */
+.input-group { display: flex; flex-direction: column; gap: 8px; }
+.input-label {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+textarea, input[type=text], input[type=url] {
+  width: 100%;
+  background: rgba(255,255,255,0.04);
+  border: 1.5px solid var(--border);
+  border-radius: 10px;
+  padding: 13px 15px;
+  color: var(--text);
+  font-size: 14px;
+  font-family: inherit;
+  outline: none;
+  resize: vertical;
+  transition: border-color 0.18s, box-shadow 0.18s;
+  line-height: 1.55;
+}
+textarea:focus, input:focus {
+  border-color: var(--teal);
+  box-shadow: 0 0 0 3px rgba(0,150,180,0.1);
+}
+textarea::placeholder, input::placeholder { color: rgba(255,255,255,0.2); }
+
+/* ── File drop zone ────────────────────────────────────────── */
+.file-zone {
+  position: relative;
+  border: 2px dashed rgba(255,255,255,0.12);
+  border-radius: var(--radius);
+  padding: 28px 20px;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.18s;
+  background: rgba(255,255,255,0.02);
+}
+.file-zone:hover, .file-zone.drag-over {
+  border-color: var(--teal);
+  background: rgba(0,150,180,0.07);
+}
+.file-zone input[type=file] {
+  position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%;
+}
+.file-zone-icon { font-size: 30px; margin-bottom: 8px; }
+.file-zone-label { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); }
+.file-zone-hint  { font-size: 11px; color: var(--muted); margin-top: 4px; }
+.file-chosen {
+  display: none;
+  align-items: center;
+  gap: 10px;
+  background: rgba(0,150,180,0.1);
+  border: 1.5px solid rgba(0,150,180,0.3);
+  border-radius: 10px;
+  padding: 11px 14px;
+}
+.file-chosen.show { display: flex; }
+.file-icon { font-size: 20px; flex-shrink: 0; }
+.file-name { font-size: 13px; color: var(--accent); font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.file-clear { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 18px; cursor: pointer; padding: 0; line-height: 1; flex-shrink: 0; transition: color 0.15s; }
+.file-clear:hover { color: #ff6b6b; }
+
+/* ── Generate button ───────────────────────────────────────── */
+.gen-btn {
+  width: 100%;
+  padding: 15px;
+  background: linear-gradient(90deg, var(--teal), var(--blue));
+  border: none;
+  border-radius: 10px;
+  color: #fff;
+  font-size: 15px;
+  font-weight: 700;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: opacity 0.18s, transform 0.12s, box-shadow 0.18s;
+  position: relative;
+  overflow: hidden;
+}
+.gen-btn::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(255,255,255,0.1), transparent);
+  opacity: 0;
+  transition: opacity 0.18s;
+}
+.gen-btn:hover:not(:disabled)::after { opacity: 1; }
+.gen-btn:hover:not(:disabled) { transform: translateY(-1px); box-shadow: 0 6px 20px rgba(0,150,180,0.35); }
+.gen-btn:active:not(:disabled) { transform: translateY(0); }
+.gen-btn:disabled { opacity: 0.45; cursor: not-allowed; transform: none; box-shadow: none; }
+
+/* ── Progress steps ────────────────────────────────────────── */
+.progress-wrap {
+  display: none;
+  flex-direction: column;
+  gap: 0;
+  background: rgba(255,255,255,0.03);
+  border: 1px solid var(--border);
+  border-radius: var(--radius);
+  overflow: hidden;
+}
+.progress-wrap.show { display: flex; }
+.progress-step {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 16px;
+  font-size: 12px;
+  color: var(--muted);
+  border-bottom: 1px solid var(--border);
+  transition: background 0.2s, color 0.2s;
+  position: relative;
+}
+.progress-step:last-child { border-bottom: none; }
+.progress-step.active { background: rgba(0,150,180,0.08); color: #fff; }
+.progress-step.done   { color: rgba(255,255,255,0.25); }
+.step-icon {
+  width: 28px; height: 28px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 12px; flex-shrink: 0;
+  background: rgba(255,255,255,0.06);
+  border: 1.5px solid rgba(255,255,255,0.1);
+  transition: all 0.2s;
+}
+.progress-step.active .step-icon {
+  background: rgba(0,150,180,0.25);
+  border-color: var(--teal);
+  color: var(--accent);
+}
+.progress-step.done .step-icon {
+  background: rgba(0,150,180,0.1);
+  border-color: rgba(0,150,180,0.2);
+  color: rgba(0,150,180,0.5);
+}
+.step-spinner {
+  width: 14px; height: 14px;
+  border: 2px solid rgba(255,255,255,0.2);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.7s linear infinite;
+  display: none;
+}
+.progress-step.active .step-spinner { display: block; }
+.progress-step.active .step-num { display: none; }
+.step-text { flex: 1; }
+.step-sub  { font-size: 10px; color: var(--muted); margin-top: 1px; }
+.progress-step.active .step-sub { color: var(--accent); opacity: 0.7; }
+
+/* ── Error msg ─────────────────────────────────────────────── */
+.error-msg {
+  display: none;
+  background: rgba(220,50,50,0.1);
+  border: 1px solid rgba(220,50,50,0.3);
+  border-radius: 10px;
+  padding: 12px 14px;
+  font-size: 12.5px;
+  color: #ff8080;
+  line-height: 1.55;
+}
+.error-msg.show { display: block; }
+
+/* ── RIGHT PANEL ───────────────────────────────────────────── */
+.right-panel {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 28px;
+  overflow-y: auto;
+  background: rgba(0,0,0,0.15);
+  gap: 20px;
+  position: relative;
+}
+
+/* ── Empty state ───────────────────────────────────────────── */
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  text-align: center;
+  opacity: 0.5;
+}
+.empty-icon { font-size: 48px; line-height: 1; }
+.empty-title { font-size: 16px; font-weight: 600; color: rgba(255,255,255,0.5); }
+.empty-sub { font-size: 13px; color: var(--muted); }
+.style-pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  justify-content: center;
+  margin-top: 4px;
+}
+.style-pill {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  color: rgba(255,255,255,0.3);
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.08);
+  padding: 4px 10px;
+  border-radius: 20px;
+}
+
+/* ── Poster preview ────────────────────────────────────────── */
+.preview-area {
+  display: none;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  width: 100%;
+  max-width: 480px;
+  animation: fadeUp 0.4s ease;
+}
+.preview-area.show { display: flex; }
+
+@keyframes fadeUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.poster-frame {
+  width: 100%;
+  background: #0a1422;
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 20px 60px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.06);
+  position: relative;
+  cursor: zoom-in;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+.poster-frame:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 28px 70px rgba(0,0,0,0.7), 0 0 0 1px rgba(0,150,180,0.2);
+}
+.poster-frame img { width: 100%; display: block; }
+
+.poster-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 0 4px;
+}
+.style-name-badge {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.style-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); }
+.style-name-text { font-size: 13px; font-weight: 600; color: rgba(255,255,255,0.7); }
+.style-num-text   { font-size: 11px; color: var(--muted); }
+
+.poster-actions {
+  display: flex;
+  gap: 8px;
+}
+.btn-dl, .btn-regen {
+  padding: 9px 18px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-dl {
+  background: var(--orange);
+  border: none;
+  color: #fff;
+}
+.btn-dl:hover { background: #d07a06; transform: translateY(-1px); box-shadow: 0 4px 14px rgba(232,144,10,0.4); }
+.btn-regen {
+  background: transparent;
+  border: 1.5px solid rgba(255,255,255,0.15);
+  color: rgba(255,255,255,0.7);
+}
+.btn-regen:hover { border-color: var(--accent); color: var(--accent); }
+
+.regen-btn {
+  width: 100%;
+  padding: 13px;
+  background: transparent;
+  border: 1.5px solid rgba(0,150,180,0.35);
+  border-radius: 10px;
+  color: var(--accent);
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  letter-spacing: 0.3px;
+  transition: all 0.18s;
+}
+.regen-btn:hover {
+  background: rgba(0,150,180,0.1);
+  border-color: var(--teal);
+  transform: translateY(-1px);
+}
+
+.hint-row {
+  font-size: 11px;
+  color: var(--muted);
+  text-align: center;
+}
+
+/* ── Lightbox ──────────────────────────────────────────────── */
+.lightbox {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.88);
+  z-index: 100;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  cursor: zoom-out;
+  backdrop-filter: blur(6px);
+}
+.lightbox.show { display: flex; animation: fadeIn 0.2s ease; }
+@keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+.lightbox img {
+  max-height: 92vh;
+  max-width: 92vw;
+  border-radius: 10px;
+  box-shadow: 0 30px 80px rgba(0,0,0,0.8);
+  object-fit: contain;
+}
+.lightbox-close {
+  position: fixed;
+  top: 20px; right: 24px;
+  font-size: 28px;
+  color: rgba(255,255,255,0.6);
+  cursor: pointer;
+  background: none;
+  border: none;
+  line-height: 1;
+  transition: color 0.15s;
+}
+.lightbox-close:hover { color: #fff; }
+
+/* ── Generating overlay ────────────────────────────────────── */
+.generating-overlay {
+  display: none;
+  position: absolute;
+  inset: 0;
+  background: rgba(7,17,29,0.8);
+  backdrop-filter: blur(4px);
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 16px;
+  z-index: 10;
+  border-radius: 0;
+}
+.generating-overlay.show { display: flex; }
+.gen-spinner {
+  width: 44px; height: 44px;
+  border: 3px solid rgba(0,150,180,0.2);
+  border-top-color: var(--teal);
+  border-radius: 50%;
+  animation: spin 0.9s linear infinite;
+}
+.gen-overlay-text { font-size: 14px; color: rgba(255,255,255,0.7); }
+.gen-overlay-sub  { font-size: 11px; color: var(--muted); margin-top: -10px; }
+
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* ── Responsive ────────────────────────────────────────────── */
+@media (max-width: 800px) {
+  .workspace { flex-direction: column; height: auto; overflow: auto; }
+  .left-panel { width: 100%; min-width: 0; border-right: none; border-bottom: 1px solid var(--border); }
+  .right-panel { min-height: 60vh; }
+}
+</style>
+</head>
+<body>
+
+<!-- Top bar -->
+<nav class="topbar">
+  <div class="topbar-brand">
+    <img src="/logo" height="36" style="object-fit:contain;display:block" alt="Qualesce" onerror="this.style.display='none'">
+    <span>Poster Agent</span>
+    <span class="topbar-badge">AI Powered</span>
+  </div>
+  <div class="topbar-right">
+    <span class="style-counter">Style: <strong id="styleCounter">—</strong></span>
+  </div>
+</nav>
+
+<div class="workspace">
+
+  <!-- ── LEFT PANEL ── -->
+  <aside class="left-panel">
+
+    <!-- Source selector -->
+    <div>
+      <div class="section-title">Select Source</div>
+      <div class="mcq-grid">
+        <button class="mcq-btn active" data-src="topic" onclick="setSource('topic')">
+          <span class="mcq-icon">📝</span>
+          <span class="mcq-label">Topic</span>
+          <span class="mcq-desc">Type a subject or theme</span>
+        </button>
+        <button class="mcq-btn" data-src="url" onclick="setSource('url')">
+          <span class="mcq-icon">🔗</span>
+          <span class="mcq-label">URL</span>
+          <span class="mcq-desc">Paste a webpage link</span>
+        </button>
+        <button class="mcq-btn" data-src="file" onclick="setSource('file')">
+          <span class="mcq-icon">📂</span>
+          <span class="mcq-label">File Upload</span>
+          <span class="mcq-desc">PDF, DOCX, PPTX, TXT</span>
+        </button>
+        <button class="mcq-btn" data-src="idea" onclick="setSource('idea')">
+          <span class="mcq-icon">💡</span>
+          <span class="mcq-label">Free Idea</span>
+          <span class="mcq-desc">Describe your concept</span>
+        </button>
+      </div>
+    </div>
+
+    <!-- Text input -->
+    <div class="input-group" id="textWrap">
+      <label class="input-label" id="inputLabel">Enter Topic</label>
+      <textarea id="inputField" rows="4"
+        placeholder="e.g. AI-powered customer onboarding for enterprise SaaS"></textarea>
+    </div>
+
+    <!-- File input -->
+    <div class="input-group" id="fileWrap" style="display:none">
+      <label class="input-label">Upload File</label>
+      <div class="file-zone" id="fileDrop"
+           ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event)">
+        <input type="file" id="fileInput" accept=".txt,.docx,.pptx,.pdf" onchange="onFileChange(event)">
+        <div class="file-zone-icon">📂</div>
+        <div class="file-zone-label">Click to browse or drag & drop</div>
+        <div class="file-zone-hint">PDF · DOCX · PPTX · TXT</div>
+      </div>
+      <div class="file-chosen" id="fileChosen">
+        <span class="file-icon">📄</span>
+        <span class="file-name" id="fileName"></span>
+        <button class="file-clear" onclick="clearFile()" title="Remove">✕</button>
+      </div>
+    </div>
+
+    <!-- Generate button -->
+    <button class="gen-btn" id="genBtn" onclick="generate()">
+      ✦ Generate Poster
+    </button>
+
+    <!-- Progress steps -->
+    <div class="progress-wrap" id="progressWrap">
+      <div class="progress-step" id="step-fetch">
+        <div class="step-icon">
+          <span class="step-num">1</span>
+          <span class="step-spinner"></span>
+        </div>
+        <div>
+          <div class="step-text" id="step-fetch-text">Reading content</div>
+          <div class="step-sub" id="step-fetch-sub">Extracting text from source</div>
+        </div>
+      </div>
+      <div class="progress-step" id="step-gen">
+        <div class="step-icon">
+          <span class="step-num">2</span>
+          <span class="step-spinner"></span>
+        </div>
+        <div>
+          <div class="step-text">Generating design</div>
+          <div class="step-sub">Groq AI · llama-3.3-70b</div>
+        </div>
+      </div>
+      <div class="progress-step" id="step-render">
+        <div class="step-icon">
+          <span class="step-num">3</span>
+          <span class="step-spinner"></span>
+        </div>
+        <div>
+          <div class="step-text">Rendering poster</div>
+          <div class="step-sub">High-resolution 1024×1536 PNG</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Error -->
+    <div class="error-msg" id="errorMsg"></div>
+
+    <!-- Try another style -->
+    <button class="regen-btn" id="regenBtn" onclick="generate()" style="display:none">
+      ↻ Try Another Style
+    </button>
+
+  </aside>
+
+  <!-- ── RIGHT PANEL ── -->
+  <main class="right-panel" id="rightPanel">
+
+    <!-- Empty state -->
+    <div class="empty-state" id="emptyState">
+      <div class="empty-icon">🎨</div>
+      <div class="empty-title">Ready to create your poster</div>
+      <div class="empty-sub">Choose a source, enter your content,<br>and click Generate Poster</div>
+      <div class="style-pills" id="emptyStylePills"></div>
+    </div>
+
+    <!-- Generating overlay -->
+    <div class="generating-overlay" id="genOverlay">
+      <div class="gen-spinner"></div>
+      <div class="gen-overlay-text" id="overlayText">Generating…</div>
+      <div class="gen-overlay-sub" id="overlaySub">This takes about 10–15 seconds</div>
+    </div>
+
+    <!-- Poster preview -->
+    <div class="preview-area" id="previewArea">
+      <div class="poster-meta">
+        <div class="style-name-badge">
+          <div class="style-dot"></div>
+          <span class="style-name-text" id="styleNameText">—</span>
+          <span class="style-num-text" id="styleNumText"></span>
+        </div>
+      </div>
+      <div class="poster-frame" onclick="openLightbox()" title="Click to enlarge">
+        <img id="posterImg" src="" alt="Generated poster">
+      </div>
+      <div class="poster-meta">
+        <div class="hint-row">Click poster to enlarge · Each generation uses a new style</div>
+        <div class="poster-actions">
+          <button class="btn-dl" onclick="download()">⬇ Download</button>
+          <button class="btn-regen" onclick="generate()">↻ New Style</button>
+        </div>
+      </div>
+    </div>
+
+  </main>
+</div>
+
+<!-- Lightbox -->
+<div class="lightbox" id="lightbox" onclick="closeLightbox()">
+  <button class="lightbox-close" onclick="closeLightbox()">✕</button>
+  <img id="lightboxImg" src="" alt="Poster full view">
+</div>
+
+<script>
+// ── API base URL (empty = same origin, set to Render URL when deployed) ──
+const API_BASE = window.POSTER_API_BASE || '';
+// ── State ──────────────────────────────────────────────────
+const STYLES = [
+  "Bento Dashboard","Editorial Magazine","Feature Card Matrix","Apple Keynote",
+  "Split Showcase","Zig-Zag Storyboard","Executive Report","Floating Tiles",
+  "Magazine Cover","Serpentine Timeline","Hexagon Network"
+];
+const SOURCE_CONFIGS = {
+  topic: { label:'Enter Topic',   placeholder:'e.g. AI-powered customer onboarding for enterprise SaaS', rows:4 },
+  url:   { label:'Webpage URL',   placeholder:'https://example.com/your-article', rows:2 },
+  idea:  { label:'Your Idea',     placeholder:'Describe your concept, campaign, or insight freely…', rows:5 }
+};
+const STEP_MAP = {
+  'Fetching URL...':            'step-fetch',
+  'Extracting content...':      'step-fetch',
+  'Generating poster design...':'step-gen',
+  'Rendering image...':         'step-render'
+};
+const OVERLAY_TEXT = {
+  'step-fetch':  ['Reading content…',  'Fetching & extracting text'],
+  'step-gen':    ['Building design…',  'Groq AI generating poster'],
+  'step-render': ['Rendering image…',  'Creating high-res PNG']
+};
+
+let currentSrc = 'topic';
+let selectedFile = null;
+let currentPng = null;
+let currentStyleName = '';
+let progressEs = null;
+
+// ── Init ────────────────────────────────────────────────────
+(function init() {
+  const pills = document.getElementById('emptyStylePills');
+  STYLES.forEach(name => {
+    const pill = document.createElement('span');
+    pill.className = 'style-pill';
+    pill.textContent = name;
+    pills.appendChild(pill);
+  });
+  document.getElementById('styleCounter').textContent = '8 styles';
+})();
+
+// ── Source switching ────────────────────────────────────────
+function setSource(src) {
+  currentSrc = src;
+  document.querySelectorAll('.mcq-btn').forEach(b => b.classList.toggle('active', b.dataset.src === src));
+  const isFile = src === 'file';
+  document.getElementById('textWrap').style.display = isFile ? 'none' : 'block';
+  document.getElementById('fileWrap').style.display = isFile ? 'block' : 'none';
+  if (!isFile) {
+    const cfg = SOURCE_CONFIGS[src];
+    document.getElementById('inputLabel').textContent = cfg.label;
+    const f = document.getElementById('inputField');
+    f.placeholder = cfg.placeholder;
+    f.rows = cfg.rows;
+  }
+}
+
+// ── File handling ───────────────────────────────────────────
+function onFileChange(e) { if (e.target.files[0]) setFile(e.target.files[0]); }
+function onDragOver(e)  { e.preventDefault(); document.getElementById('fileDrop').classList.add('drag-over'); }
+function onDragLeave(e) { document.getElementById('fileDrop').classList.remove('drag-over'); }
+function onDrop(e) {
+  e.preventDefault();
+  document.getElementById('fileDrop').classList.remove('drag-over');
+  if (e.dataTransfer.files[0]) setFile(e.dataTransfer.files[0]);
+}
+function setFile(file) {
+  selectedFile = file;
+  document.getElementById('fileName').textContent = file.name;
+  document.getElementById('fileChosen').classList.add('show');
+}
+function clearFile() {
+  selectedFile = null;
+  document.getElementById('fileChosen').classList.remove('show');
+  document.getElementById('fileInput').value = '';
+}
+
+// ── Progress ────────────────────────────────────────────────
+function startProgress(jobId) {
+  document.getElementById('progressWrap').classList.add('show');
+  document.getElementById('errorMsg').classList.remove('show');
+  ['step-fetch','step-gen','step-render'].forEach(id => {
+    document.getElementById(id).className = 'progress-step';
+  });
+  activateStep('step-fetch');
+  showOverlay('Extracting content…', 'AI is reading your input');
+
+  progressEs = new EventSource(`${API_BASE}/progress/${jobId}`);
+  progressEs.onmessage = e => {
+    const stepId = STEP_MAP[e.data];
+    if (stepId) {
+      const order = ['step-fetch','step-gen','step-render'];
+      const idx = order.indexOf(stepId);
+      order.slice(0, idx).forEach(id => doneStep(id));
+      activateStep(stepId);
+      const [t, s] = OVERLAY_TEXT[stepId] || ['Working…',''];
+      showOverlay(t, s);
+    }
+  };
+  progressEs.onerror = () => { if(progressEs) progressEs.close(); };
+}
+function activateStep(id) {
+  const el = document.getElementById(id);
+  if (el) el.className = 'progress-step active';
+}
+function doneStep(id) {
+  const el = document.getElementById(id);
+  if (el) el.className = 'progress-step done';
+}
+function endProgress() {
+  if (progressEs) { progressEs.close(); progressEs = null; }
+  ['step-fetch','step-gen','step-render'].forEach(id => doneStep(id));
+  setTimeout(() => document.getElementById('progressWrap').classList.remove('show'), 1500);
+}
+function showOverlay(text, sub) {
+  document.getElementById('genOverlay').classList.add('show');
+  document.getElementById('overlayText').textContent = text;
+  document.getElementById('overlaySub').textContent = sub;
+}
+function hideOverlay() {
+  document.getElementById('genOverlay').classList.remove('show');
+}
+
+// ── Generate ─────────────────────────────────────────────────
+async function generate() {
+  const btn = document.getElementById('genBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span style="display:inline-block;width:14px;height:14px;border:2px solid rgba(255,255,255,0.3);border-top-color:#fff;border-radius:50%;animation:spin 0.7s linear infinite;vertical-align:middle;margin-right:8px"></span>Generating…';
+
+  document.getElementById('emptyState').style.display = 'none';
+  document.getElementById('errorMsg').classList.remove('show');
+
+  const jobId = Math.random().toString(36).slice(2);
+  startProgress(jobId);
+
+  try {
+    let res;
+    if (currentSrc === 'file') {
+      if (!selectedFile) { showError('Please select a file first'); return; }
+      const fd = new FormData();
+      fd.append('file', selectedFile);
+      fd.append('job_id', jobId);
+      res = await fetch(API_BASE + '/generate-file', { method:'POST', body:fd });
+    } else {
+      const content = document.getElementById('inputField').value.trim();
+      if (!content) { showError('Please enter content first'); return; }
+      res = await fetch(API_BASE + '/generate', {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ source:currentSrc, content, job_id:jobId })
+      });
+    }
+
+    const data = await res.json();
+    if (data.error) { showError(data.error); return; }
+
+    currentPng = data.png;
+    currentStyleName = data.style_name;
+    document.getElementById('posterImg').src = `data:image/png;base64,${data.png}`;
+    document.getElementById('lightboxImg').src = `data:image/png;base64,${data.png}`;
+    document.getElementById('styleNameText').textContent = data.style_name;
+    document.getElementById('styleNumText').textContent = `Style ${data.style}`;
+    document.getElementById('styleCounter').textContent = `Style ${data.style}: ${data.style_name}`;
+
+    // Highlight active style in sidebar
+    document.querySelectorAll('#styleList > div').forEach((el, i) => {
+      el.style.borderColor = i === data.style ? 'rgba(0,150,180,0.5)' : 'rgba(255,255,255,0.06)';
+      el.style.background  = i === data.style ? 'rgba(0,150,180,0.1)' : 'rgba(255,255,255,0.03)';
+      el.style.color       = i === data.style ? '#fff' : 'rgba(255,255,255,0.5)';
+    });
+
+    document.getElementById('previewArea').classList.add('show');
+    document.getElementById('regenBtn').style.display = 'block';
+
+  } catch(e) {
+    showError('Request failed: ' + e.message);
+  } finally {
+    endProgress();
+    hideOverlay();
+    btn.disabled = false;
+    btn.innerHTML = '✦ Generate Poster';
+  }
+}
+
+function showError(msg) {
+  document.getElementById('emptyState').style.display = 'flex';
+  const el = document.getElementById('errorMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  hideOverlay();
+}
+
+// ── Download ─────────────────────────────────────────────────
+function download() {
+  if (!currentPng) return;
+  const a = document.createElement('a');
+  a.href = `data:image/png;base64,${currentPng}`;
+  a.download = `qualesce_poster_${currentStyleName.replace(/\s+/g,'_').toLowerCase()}.png`;
+  a.click();
+}
+
+// ── Lightbox ──────────────────────────────────────────────────
+function openLightbox()  { document.getElementById('lightbox').classList.add('show'); }
+function closeLightbox() { document.getElementById('lightbox').classList.remove('show'); }
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeLightbox(); });
+</script>
+</body>
+</html>

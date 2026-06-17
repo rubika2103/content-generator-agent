@@ -1,0 +1,8 @@
+flask
+groq
+playwright
+requests
+pypdf
+pillow
+gunicorn
+httpx

@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: qualesce-poster-agent
+    runtime: python
+    buildCommand: pip install -r requirements.txt && playwright install chromium --with-deps
+    startCommand: gunicorn agent:app --bind 0.0.0.0:$PORT --timeout 120 --workers 1
+    envVars:
+      - key: GROQ_API_KEY
+        sync: false
+      - key: PYTHON_VERSION
+        value: 3.11.0

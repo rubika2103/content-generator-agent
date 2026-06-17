@@ -12,7 +12,7 @@ DIR = Path(__file__).parent
 ASSETS = DIR / 'assets'
 TRACKER = DIR / 'style_tracker.json'
 
-app = Flask(__name__, static_folder='public', static_url_path='')
+app = Flask(__name__, static_folder=str(DIR / 'public'), static_url_path='')
 
 # Load logo once at startup
 LOGO_B64 = ''
@@ -1157,9 +1157,10 @@ def serve_logo():
     from flask import send_file
     return send_file(str(ASSETS / 'qualesce_logo.jpg'), mimetype='image/jpeg')
 
-@app.route('/')
-def index():
-    return app.send_static_file('index.html')
+ @app.route('/')
+  def index():
+      from flask import send_from_directory
+      return send_from_directory(str(DIR / 'public'), 'index.html')
 
 @app.route('/generate', methods=['POST'])
 def generate():

@@ -1,8 +1,0 @@
-streamlit
-flask
-groq
-playwright
-requests
-pypdf
-pillow
-httpx

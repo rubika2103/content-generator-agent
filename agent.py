@@ -12,7 +12,8 @@ DIR = Path(__file__).parent
 ASSETS = DIR / 'assets'
 TRACKER = DIR / 'style_tracker.json'
 
-app = Flask(__name__, static_folder=str(DIR / 'public'), static_url_path='')
+_public = DIR / 'public'
+  app = Flask(__name__, static_folder=str(_public) if _public.exists() else None, static_url_path='')
 
 # Load logo once at startup
 LOGO_B64 = ''

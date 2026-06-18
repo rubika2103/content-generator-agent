@@ -1083,11 +1083,15 @@ def render_to_png(html: str) -> bytes:
         img.save(buf, format='PNG', optimize=True)
         return buf.getvalue()
 
-def get_api_key():
-    cfg = DIR / 'brand_config.json'
-    if cfg.exists():
-        return json.loads(cfg.read_text()).get('groq_api_key', '')
-    return os.environ.get('GROQ_API_KEY', '')
+ def get_api_key():
+      cfg = DIR / 'brand_config.json'
+      if cfg.exists():
+          return json.loads(cfg.read_text()).get('groq_api_key', '')
+      try:
+          import streamlit as st
+          return st.secrets.get('GROQ_API_KEY', '') or os.environ.get('GROQ_API_KEY', '')
+      except Exception:
+          return os.environ.get('GROQ_API_KEY', '')
 
 def get_next_style():
     try:
